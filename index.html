@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FaithGuess</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fb;
+      color: #111;
+    }
+
+    .screen {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      max-width: 520px;
+      width: 100%;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 16px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 10px;
+      border-radius: 14px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .choice {
+      background: white;
+      border: 2px solid #e5e7eb;
+    }
+
+    .correct {
+      background: #22c55e;
+      color: white;
+    }
+
+    .wrong {
+      background: #ef4444;
+      color: white;
+    }
+
+    .disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    .primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .explanation {
+      background: #eef2ff;
+      padding: 12px;
+      border-radius: 12px;
+      margin: 12px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    h1, h2 {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+<div id="app"></div>
+
+<script>
+const quizData = {
+  places: [
+    {
+      image: "images/places/synagogue.png",
+      correct: "Judaism",
+      options: ["Christianity","Judaism","Zoroastrianism","Islam"],
+      explanation: "Synagogues are Jewish places of worship."
+    },
+    {
+      image: "images/places/kaaba.png",
+      correct: "Islam",
+      options: ["Judaism","Islam","Christianity","Baháʼí"],
+      explanation: "The Kaaba is Islam’s most sacred site."
+    }
+  ],
+  people: [
+    {
+      image: "images/people/sikh-turban.png",
+      correct: "Sikhism",
+      options: ["Islam","Sikhism","Hinduism","Jainism"],
+      explanation: "Turbans are a religious requirement in Sikhism."
+    }
+  ]
+};
+
+let category = null;
+let questions = [];
+let index = 0;
+let score = 0;
+let answered = false;
+let selected = null;
+
+const app = document.getElementById("app");
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function renderCategorySelect() {
+  app.innerHTML = `
+    <div class="screen">
+      <div class="card">
+        <h1>FaithGuess</h1>
+        <div class="grid">
+          ${Object.keys(quizData).map(k =>
+            `<button class="primary" onclick="startGame('${k}')">${k.toUpperCase()}</button>`
+          ).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function startGame(cat) {
+  category = cat;
+  questions = shuffle(quizData[cat]);
+  index = 0;
+  score = 0;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[index];
+  answered = false;
+  selected = null;
+
+  const opts = shuffle(q.options);
+
+  app.innerHTML = `
+    <div class="screen">
+      <div class="card">
+        <img src="${q.image}">
+        ${opts.map(o =>
+          `<button class="choice" onclick="answer('${o}')">${o}</button>`
+        ).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function answer(opt) {
+  if (answered) return;
+  answered = true;
+  selected = opt;
+
+  const q = questions[index];
+  if (opt === q.correct) score++;
+
+  renderAnswer();
+}
+
+function renderAnswer() {
+  const q = questions[index];
+
+  app.innerHTML = `
+    <div class="screen">
+      <div class="card">
+        <img src="${q.image}">
+        ${q.options.map(o => {
+          let cls = "choice disabled";
+          if (o === q.correct) cls = "correct";
+          else if (o === selected) cls = "wrong";
+          return `<button class="${cls}">${o}</button>`;
+        }).join("")}
+
+        <div class="explanation">${q.explanation}</div>
+
+        <button class="primary" onclick="next()">Next</button>
+      </div>
+    </div>
+  `;
+}
+
+function next() {
+  index++;
+  if (index >= questions.length) {
+    renderScore();
+  } else {
+    renderQuestion();
+  }
+}
+
+function renderScore() {
+  app.innerHTML = `
+    <div class="screen">
+      <div class="card">
+        <h2>Quiz Complete</h2>
+        <h1>${score} / ${questions.length}</h1>
+        <button class="primary" onclick="renderCategorySelect()">Play Again</button>
+      </div>
+    </div>
+  `;
+}
+
+renderCategorySelect();
+</script>
+</body>
+</html>
